@@ -19,6 +19,8 @@ setup(
     license="MIT License",
     package_dir={"aiorexense": "src"},
     packages=["aiorexense"],
+    include_package_data=True,
+    package_data={"aiorexense": ["py.typed"]},
     url="https://github.com/RexenseIoT/aiorexense.git",  # adjust as needed
     python_requires=">=3.8",
     install_requires=[
