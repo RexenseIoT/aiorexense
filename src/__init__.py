@@ -2,7 +2,7 @@
 Rexense WS client library init.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .api import get_basic_info
 from .const import (
