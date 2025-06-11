@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiorexense"
-version = "0.1.2"
+version = "0.1.3"
 description = "Rexense device client library: HTTP API + WebSocket"
 readme = "README.md"
 license = { file = "LICENSE" }

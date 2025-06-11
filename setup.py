@@ -11,7 +11,7 @@ long_description = (HERE / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="aiorexense",
-    version="0.1.0",
+    version="0.1.3",
     description="Rexense device client library with HTTP API and WebSocket support",
     long_description=long_description,
     long_description_content_type="text/markdown",
