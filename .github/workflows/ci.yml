@@ -1,0 +1,142 @@
+name: Test, build and publish
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Version to publish from main, for example 0.2.0 (blank only tests)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12', '3.13', '3.14']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install '.[dev]'
+      - run: pytest --cov=aiorexense --cov-report=term-missing
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.14'
+      - run: python -m pip install -e '.[dev]' build twine
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - name: Verify the installed wheel includes its runtime resources
+        run: |
+          python -m pip install --force-reinstall dist/*.whl
+          cd /tmp
+          python -c 'from aiorexense import RexenseGateway, RexenseWebsocketClient, load_baseline; assert "domains" in load_baseline()'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: distributions
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    needs: [test, build]
+    if: >-
+      github.repository == 'RexenseIoT/aiorexense' &&
+      github.ref == 'refs/heads/main' &&
+      ((github.event_name == 'push' && contains(github.event.head_commit.message, 'Release: ')) ||
+       (github.event_name == 'workflow_dispatch' && inputs.release_version != ''))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: distributions
+          path: dist/
+      - name: Validate release version and publishing configuration
+        id: release
+        env:
+          PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          REQUESTED_VERSION: ${{ inputs.release_version }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          python - <<'PY'
+          import email.parser
+          import os
+          from pathlib import Path
+          import re
+          import zipfile
+
+          requested = os.environ.get('REQUESTED_VERSION', '')
+          if not requested:
+              match = re.search(r'^Release: (\d+\.\d+\.\d+)$', os.environ.get('COMMIT_MESSAGE', ''), re.MULTILINE)
+              if match is None:
+                  raise SystemExit('A Release: X.Y.Z commit trailer is required')
+              requested = match[1]
+          if not re.fullmatch(r'\d+\.\d+\.\d+', requested):
+              raise SystemExit('Only a stable X.Y.Z release version is accepted')
+          wheels = list(Path('dist').glob('*.whl'))
+          if len(wheels) != 1:
+              raise SystemExit('Expected exactly one built wheel')
+          with zipfile.ZipFile(wheels[0]) as wheel:
+              metadata_name, = [name for name in wheel.namelist() if name.endswith('.dist-info/METADATA')]
+              metadata = email.parser.Parser().parsestr(wheel.read(metadata_name).decode())
+          if metadata['Name'] != 'aiorexense' or metadata['Version'] != requested:
+              raise SystemExit('Built distribution does not match the requested release')
+          if not os.environ.get('PYPI_API_TOKEN'):
+              raise SystemExit('Configure the PYPI_API_TOKEN repository Actions secret before publishing')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'version={requested}\n')
+          PY
+      - name: Create or verify the immutable source tag
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from urllib.error import HTTPError
+          from urllib.request import Request, urlopen
+
+          base = f"{os.environ['GITHUB_API_URL']}/repos/{os.environ['GITHUB_REPOSITORY']}/git"
+          tag = 'v' + os.environ['RELEASE_VERSION']
+          headers = {'Authorization': 'Bearer ' + os.environ['GITHUB_TOKEN'], 'Accept': 'application/vnd.github+json'}
+          try:
+              with urlopen(Request(f'{base}/ref/tags/{tag}', headers=headers), timeout=30) as response:
+                  existing = json.load(response)
+          except HTTPError as error:
+              if error.code != 404:
+                  raise SystemExit(f'Tag lookup failed: HTTP {error.code}') from None
+              payload = json.dumps({'ref': 'refs/tags/' + tag, 'sha': os.environ['GITHUB_SHA']}).encode()
+              headers['Content-Type'] = 'application/json'
+              with urlopen(Request(f'{base}/refs', data=payload, headers=headers), timeout=30):
+                  pass
+          else:
+              if existing['object']['sha'] != os.environ['GITHUB_SHA']:
+                  raise SystemExit('Existing release tag points at a different commit; refusing to move it')
+          PY
+      - name: Publish the tested CI artifacts to PyPI
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          attestations: false

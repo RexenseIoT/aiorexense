@@ -1,11 +1,14 @@
 """
 WebSocket client for Rexense devices, independent of Home Assistant.
 """
+
 import asyncio
 import logging
+from contextlib import suppress
 from typing import Any, Callable, Optional
 
 from aiohttp import ClientSession, ClientWebSocketResponse, ClientWSTimeout, WSMsgType
+
 from .const import REXENSE_SWITCH_ONOFF
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,6 +45,7 @@ class RexenseWebsocketClient:
 
         self.on_update = on_update
         self._session = session
+        self._owns_session = session is None
         self.signal_update = f"{device_id}_update"
 
     async def connect(self) -> None:
@@ -49,7 +53,7 @@ class RexenseWebsocketClient:
         if self._running:
             return
         # Prepare session
-        if self._session is None:
+        if self._session is None or (self._owns_session and self._session.closed):
             self._session = ClientSession()
 
         _LOGGER.debug("Attempting WebSocket connection to %s", self.url)
@@ -65,6 +69,9 @@ class RexenseWebsocketClient:
                 "Initial WebSocket connect failed for %s: %s", self.device_id, err
             )
             self._running = False
+            if self._owns_session:
+                await self._session.close()
+                self._session = None
             raise
         else:
             self._running = True
@@ -98,7 +105,9 @@ class RexenseWebsocketClient:
                         try:
                             data = msg.json()
                         except ValueError as e:
-                            _LOGGER.error("Received invalid JSON: %s, data: %s", e, msg.data)
+                            _LOGGER.error(
+                                "Received invalid JSON: %s, data: %s", e, msg.data
+                            )
                             continue
                         _LOGGER.debug("Received message: %s", data)
                         self._handle_message(data)
@@ -135,7 +144,7 @@ class RexenseWebsocketClient:
 
     def _handle_message(self, data: dict[str, Any]) -> None:
         """Process incoming message from WebSocket."""
-        func = (data.get("FunctionCode") or data.get("function") or data.get("func"))
+        func = data.get("FunctionCode") or data.get("function") or data.get("func")
         if isinstance(func, str):
             func = func.lower()
 
@@ -144,7 +153,7 @@ class RexenseWebsocketClient:
             _LOGGER.debug("Received payload: %s", payload)
             for k, v in payload.items():
                 key = k.replace("_1", "")
-                if key == REXENSE_SWITCH_ONOFF['name']:
+                if key == REXENSE_SWITCH_ONOFF["name"]:
                     self.switch_state = v not in ("0", False)
                     _LOGGER.debug("Update switch state: %s", self.switch_state)
                 else:
@@ -178,20 +187,15 @@ class RexenseWebsocketClient:
         """Disconnect and stop the WebSocket client."""
         _LOGGER.info("Disconnecting WebSocket for device %s", self.device_id)
         self._running = False
+        if self._task:
+            self._task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._task
+            self._task = None
         if self.ws is not None:
             await self.ws.close()
-        if self._task:
-            await self._task
         self.ws = None
         self.connected = False
-
-    async def disconnect(self) -> None:
-        """Disconnect and stop the WebSocket client."""
-        _LOGGER.info("Disconnecting WebSocket for device %s", self.device_id)
-        self._running = False
-        if self.ws is not None:
-            await self.ws.close()
-        if self._task:
-            await self._task
-        self.ws = None
-        self.connected = False
+        if self._owns_session and self._session is not None:
+            await self._session.close()
+            self._session = None

@@ -1,16 +1,17 @@
 """
 HTTP API for Rexense device basic info
 """
+
 import asyncio
 import logging
 from typing import Any, Tuple
 
-from aiohttp import ClientSession, ClientError
+from aiohttp import ClientError, ClientSession
 
 from .const import (
     API_VERSION,
-    VENDOR_CODE,
     FUNCTION_GET_BASIC_INFO,
+    VENDOR_CODE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,7 +49,9 @@ async def get_basic_info(
 
     data = await resp.json()
 
-    if data.get("FunctionCode") != FUNCTION_GET_BASIC_INFO.replace("GetBasic", "ReportBasic") or not data.get("Payload"):
+    if data.get("FunctionCode") != FUNCTION_GET_BASIC_INFO.replace(
+        "GetBasic", "ReportBasic"
+    ) or not data.get("Payload"):
         _LOGGER.error("Invalid response format: %s", data)
         raise ClientError("Invalid response format")
 

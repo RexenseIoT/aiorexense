@@ -1,0 +1,603 @@
+{
+  "schema_version": 1,
+  "taxonomy_version": 3,
+  "unknown_dev_type": "unknown_device",
+  "generic_dev_type": "generic_device",
+  "domains": {
+    "gqb": {
+      "description": "GQB tunneled interaction on provisional Cluster 0x0AAA",
+      "properties": {},
+      "actions": {
+        "gqb_tunneled_request": {
+          "description": "0x00 TunneledRequest, client to server: OpCode + optional TransactionID + data",
+          "args": {
+            "opcode": {"type": "int", "min": 0, "max": 255},
+            "transaction_id": {"type": "int", "min": 0, "max": 255, "required": false},
+            "data": {"type": "array", "items": {"type": "int", "min": 0, "max": 255}, "min_items": 0, "max_items": 508, "description": "Payload bytes; at most 507 bytes when transaction_id is present"}
+          }
+        },
+        "gqb_tunneled_report_response": {
+          "description": "0x03 TunneledReportResponse, client to server: OpCode + optional TransactionID + data",
+          "args": {
+            "opcode": {"type": "int", "min": 0, "max": 255},
+            "transaction_id": {"type": "int", "min": 0, "max": 255, "required": false},
+            "data": {"type": "array", "items": {"type": "int", "min": 0, "max": 255}, "min_items": 0, "max_items": 508, "description": "Payload bytes; at most 507 bytes when transaction_id is present"}
+          }
+        }
+      },
+      "events": {
+        "gqb_tunneled_response": {
+          "description": "0x01 TunneledResponse, server to client",
+          "args": {
+            "opcode": {"type": "int", "min": 0, "max": 255},
+            "data": {"type": "array", "items": {"type": "int", "min": 0, "max": 255}, "min_items": 0, "max_items": 65534, "description": "All bytes after OpCode, including TransactionID if present; interpreted by the upper layer"}
+          }
+        },
+        "gqb_tunneled_report": {
+          "description": "0x02 TunneledReport, server to client",
+          "args": {
+            "opcode": {"type": "int", "min": 0, "max": 255},
+            "data": {"type": "array", "items": {"type": "int", "min": 0, "max": 255}, "min_items": 0, "max_items": 65534, "description": "All bytes after OpCode, including TransactionID if present; interpreted by the upper layer"}
+          }
+        }
+      }
+    },
+    "identify": {
+      "properties": {},
+      "actions": {
+        "identify": {
+          "description": "Locate the device by flashing, sounding or vibrating; zero seconds stops identification",
+          "args": {
+            "identify_time": {"type": "int", "min": 0, "max": 65535, "unit": "s", "default": 5}
+          }
+        }
+      },
+      "events": {}
+    },
+    "onoff": {
+      "properties": {
+        "on": {"type": "bool", "access": "rw"}
+      },
+      "actions": {
+        "turn_on": {"args": {}},
+        "turn_off": {"args": {}},
+        "toggle": {"args": {}}
+      },
+      "events": {}
+    },
+    "battery": {
+      "properties": {
+        "battery_level": {"type": "number", "min": 0, "max": 100, "unit": "%", "access": "r"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "brightness": {
+      "properties": {
+        "brightness": {"type": "number", "min": 0, "max": 100, "unit": "%", "access": "rw"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "color_temp": {
+      "properties": {
+        "color_temperature": {"type": "number", "min": 1, "max": 1000000, "unit": "K", "access": "rw"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "color_hs": {
+      "properties": {
+        "hue": {"type": "number", "min": 0, "max": 254, "access": "rw"},
+        "saturation": {"type": "number", "min": 0, "max": 100, "unit": "%", "access": "rw"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "cover": {
+      "properties": {
+        "cover_state": {"type": "enum", "enum": ["opening", "closing", "stopped", "unknown"], "access": "r"}
+      },
+      "actions": {
+        "open": {"args": {}},
+        "close": {"args": {}},
+        "stop": {"args": {}}
+      },
+      "events": {}
+    },
+    "position": {
+      "properties": {
+        "position": {"type": "number", "min": 0, "max": 100, "unit": "%open", "access": "rw"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "lock": {
+      "properties": {
+        "lock_state": {
+          "type": "enum",
+          "enum": ["locked", "unlocked", "unknown"],
+          "access": "rw",
+          "risk": "high",
+          "confirm_required": true
+        }
+      },
+      "actions": {},
+      "events": {}
+    },
+    "climate": {
+      "properties": {
+        "climate_mode": {"type": "enum", "enum": ["off", "cool", "heat", "auto"], "access": "rw"},
+        "climate_state": {"type": "enum", "enum": ["idle", "cooling", "heating", "unknown"], "access": "r"},
+        "climate_target_temperature": {"type": "number", "min": -50, "max": 50, "unit": "C", "access": "rw"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "temperature": {
+      "properties": {
+        "temperature": {"type": "number", "min": -100, "max": 200, "unit": "C", "access": "r"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "humidity": {
+      "properties": {
+        "humidity": {"type": "number", "min": 0, "max": 100, "unit": "%", "access": "r"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "motion": {
+      "properties": {
+        "motion_detected": {"type": "bool", "access": "r"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "illuminance": {
+      "properties": {
+        "illuminance": {"type": "number", "min": 0, "unit": "lx", "access": "r"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "contact": {
+      "properties": {
+        "contact_open": {"type": "bool", "access": "r"}
+      },
+      "actions": {},
+      "events": {
+        "contact_changed": {
+          "description": "Contact state changed",
+          "args": {
+            "contact_open": {"type": "bool"}
+          }
+        }
+      }
+    },
+    "kr_ext32_zone_status": {
+      "properties": {},
+      "actions": {},
+      "events": {
+        "kr_ext32_zone_status_notification": {
+          "description": "TLSR82xx private Zone Status Notification with Extended32 Status appended after the 6-byte standard payload",
+          "args": {
+            "extended32_status": {
+              "type": "int",
+              "min": 0,
+              "max": 4294967295,
+              "description": "Extended32 Status (map32): bit-masking information for each motion sensor detection cycle, up to 32 bits; bit meanings are device-defined"
+            }
+          }
+        }
+      }
+    },
+    "tamper": {
+      "properties": {
+        "tamper": {"type": "bool", "access": "r"}
+      },
+      "actions": {},
+      "events": {}
+    },
+    "button_event": {
+      "properties": {},
+      "actions": {},
+      "events": {
+        "button_event": {
+          "args": {
+            "button": {"type": "int", "min": 1},
+            "gesture": {"type": "enum", "enum": ["single", "double", "long_press", "release"]}
+          }
+        }
+      }
+    }
+  },
+  "model_mappings": [
+    {
+      "model_id": "DoorSensor-EF-3.0",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "contact_sensor", "domains": ["contact", "tamper", "battery", "identify"]}
+      ]
+    },
+    {
+      "model_id": "TLSR82xx",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "contact_sensor", "domains": ["contact", "tamper", "battery", "kr_ext32_zone_status", "identify"]}
+      ]
+    },
+    {
+      "model_id": "RHTEST",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "plug", "domains": ["onoff", "identify"]}
+      ]
+    },
+    {
+      "model_id": "RHTEST2",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "plug", "domains": ["onoff", "identify"]}
+      ]
+    },
+    {
+      "model_id": "QYL007",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "motion_sensor", "domains": ["motion", "tamper", "battery", "identify"]}
+      ]
+    },
+    {
+      "model_id": "RH-4MC01-DM01",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "window_covering", "domains": ["cover", "identify"]}
+      ]
+    },
+    {
+      "model_id": "HYWR1003",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 2, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 3, "dev_type": "switch", "domains": ["onoff", "identify"]}
+      ]
+    },
+    {
+      "model_id": "spid:10003730",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "light", "domains": ["onoff", "brightness", "color_temp", "color_hs", "identify"]}
+      ]
+    },
+	{
+      "model_id": "spid:10013071",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]}
+      ]
+    },
+	{
+      "model_id": "spid:10013072",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]},
+		{"endpoint": 2, "dev_type": "switch", "domains": ["onoff", "identify"]}
+      ]
+    },
+	{
+      "model_id": "spid:10013073",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 2, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 3, "dev_type": "switch", "domains": ["onoff", "identify"]}
+      ]
+    },
+	{
+      "model_id": "spid:10013074",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 2, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 3, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 4, "dev_type": "switch", "domains": ["onoff", "identify"]}
+      ]
+    },
+    {
+      "model_id": "spid:10003729",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "light", "domains": ["onoff", "brightness", "color_temp", "identify"]}
+      ]
+    },
+    {
+      "model_id": "LST103",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "light", "domains": ["onoff", "brightness", "color_temp", "color_hs", "identify"]}
+      ]
+    },
+    {
+      "model_id": "TL0001",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]}
+      ]
+    },
+    {
+      "model_id": "TL0002",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 2, "dev_type": "switch", "domains": ["onoff", "identify"]}
+      ]
+    },
+    {
+      "model_id": "TL0003",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 2, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 3, "dev_type": "switch", "domains": ["onoff", "identify"]}
+      ]
+    },
+    {
+      "model_id": "TL0004",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 2, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 3, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 4, "dev_type": "switch", "domains": ["onoff", "identify"]}
+      ]
+    },
+    {
+      "model_id": "TL0042",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 2, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 3, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 4, "dev_type": "switch", "domains": ["onoff", "identify"]},
+        {"endpoint": 5, "dev_type": "scene_panel", "domains": ["button_event", "identify"]},
+        {"endpoint": 6, "dev_type": "scene_panel", "domains": ["button_event", "identify"]}
+      ]
+    },
+    {
+      "model_id": "TL00S6",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "scene_panel", "domains": ["button_event", "identify"]},
+        {"endpoint": 2, "dev_type": "scene_panel", "domains": ["button_event", "identify"]},
+        {"endpoint": 3, "dev_type": "scene_panel", "domains": ["button_event", "identify"]},
+        {"endpoint": 4, "dev_type": "scene_panel", "domains": ["button_event", "identify"]},
+        {"endpoint": 5, "dev_type": "scene_panel", "domains": ["button_event", "identify"]},
+        {"endpoint": 6, "dev_type": "scene_panel", "domains": ["button_event", "identify"]}
+      ]
+    },
+    {
+      "model_id": "TS0222",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "light_sensor", "domains": ["illuminance", "battery", "identify"]}
+      ]
+    },
+    {
+      "model_id": "QYL004",
+      "endpoints": [
+        {"endpoint": 1, "dev_type": "environment_sensor", "domains": ["temperature", "humidity", "battery", "identify"]}
+      ]
+    }
+  ],
+  "classifiers": [
+    {
+      "dev_type": "contact_sensor",
+      "when": {"attribute_equals": {"cluster": 1280, "attribute": 1, "value": 21}}
+    },
+    {
+      "dev_type": "environment_sensor",
+      "when": {
+        "all": [
+          {"not": {"has_cluster": {"cluster": 513}}},
+          {"any": [
+            {"has_attribute": {"cluster": 1026, "attribute": 0}},
+            {"has_attribute": {"cluster": 1029, "attribute": 0}}
+          ]}
+        ]
+      }
+    },
+    {
+      "dev_type": "light",
+      "when": {"endpoint": {"profile_id": 260, "device_id_in": [256, 257, 258, 269]}}
+    },
+    {
+      "dev_type": "light_sensor",
+      "when": {"endpoint": {"profile_id": 260, "device_id_in": [262]}}
+    },
+    {
+      "dev_type": "motion_sensor",
+      "when": {"endpoint": {"profile_id": 260, "device_id_in": [263]}}
+    },
+    {
+      "dev_type": "environment_sensor",
+      "when": {"endpoint": {"profile_id": 260, "device_id_in": [770]}}
+    },
+    {
+      "dev_type": "window_covering",
+      "when": {"endpoint": {"profile_id": 260, "device_id_in": [514]}}
+    },
+    {
+      "dev_type": "door_lock",
+      "when": {"endpoint": {"profile_id": 260, "device_id_in": [10]}}
+    },
+    {
+      "dev_type": "thermostat",
+      "when": {"endpoint": {"profile_id": 260, "device_id_in": [769]}}
+    },
+    {
+      "dev_type": "plug",
+      "when": {"endpoint": {"profile_id": 260, "device_id_in": [9, 81]}}
+    },
+    {
+      "dev_type": "switch",
+      "when": {"endpoint": {"profile_id": 260, "device_id_in": [0]}}
+    },
+    {"dev_type": "window_covering", "when": {"has_cluster": {"cluster": 258}}},
+    {"dev_type": "door_lock", "when": {"has_attribute": {"cluster": 257, "attribute": 0}}},
+    {
+      "dev_type": "thermostat",
+      "when": {"any": [
+        {"has_attribute": {"cluster": 513, "attribute": 18}},
+        {"has_attribute": {"cluster": 513, "attribute": 28}},
+        {"has_attribute": {"cluster": 513, "attribute": 41}}
+      ]}
+    },
+    {"dev_type": "switch", "when": {"has_cluster": {"cluster": 6}}}
+  ],
+  "domain_rules": [
+    {"domain": "identify", "when": {"has_attribute": {"cluster": 3, "attribute": 0}}},
+    {"domain": "onoff", "when": {"endpoint": {"profile_id": 260, "device_id_in": [0, 9, 81, 256, 257, 258, 269]}}},
+    {"domain": "brightness", "when": {"endpoint": {"profile_id": 260, "device_id_in": [81, 257, 258, 269]}}},
+    {"domain": "color_temp", "when": {"endpoint": {"profile_id": 260, "device_id_in": [258, 269]}}},
+    {"domain": "color_hs", "when": {"endpoint": {"profile_id": 260, "device_id_in": [258, 269]}}},
+    {"domain": "cover", "when": {"endpoint": {"profile_id": 260, "device_id_in": [514]}}},
+    {"domain": "lock", "when": {"endpoint": {"profile_id": 260, "device_id_in": [10]}}},
+    {"domain": "climate", "when": {"endpoint": {"profile_id": 260, "device_id_in": [769]}}},
+    {"domain": "illuminance", "when": {"endpoint": {"profile_id": 260, "device_id_in": [262]}}},
+    {"domain": "motion", "when": {"endpoint": {"profile_id": 260, "device_id_in": [263]}}},
+    {"domain": "temperature", "when": {"endpoint": {"profile_id": 260, "device_id_in": [770]}}},
+    {"domain": "onoff", "when": {"has_attribute": {"cluster": 6, "attribute": 0}}},
+    {"domain": "brightness", "when": {"has_attribute": {"cluster": 8, "attribute": 0}}},
+    {"domain": "color_temp", "when": {"has_attribute": {"cluster": 768, "attribute": 7}}},
+    {
+      "domain": "color_hs",
+      "when": {"any": [
+        {"has_attribute": {"cluster": 768, "attribute": 0}},
+        {"has_attribute": {"cluster": 768, "attribute": 1}}
+      ]}
+    },
+    {"domain": "cover", "when": {"has_cluster": {"cluster": 258}}},
+    {"domain": "position", "when": {"has_attribute": {"cluster": 258, "attribute": 8}}},
+    {"domain": "lock", "when": {"has_attribute": {"cluster": 257, "attribute": 0}}},
+    {
+      "domain": "climate",
+      "when": {"any": [
+        {"has_attribute": {"cluster": 513, "attribute": 18}},
+        {"has_attribute": {"cluster": 513, "attribute": 28}},
+        {"has_attribute": {"cluster": 513, "attribute": 41}}
+      ]}
+    },
+    {
+      "domain": "temperature",
+      "when": {"any": [
+        {"has_attribute": {"cluster": 1026, "attribute": 0}},
+        {"has_attribute": {"cluster": 513, "attribute": 0}}
+      ]}
+    },
+    {"domain": "humidity", "when": {"has_attribute": {"cluster": 1029, "attribute": 0}}},
+    {
+      "domain": "contact",
+      "when": {"all": [
+        {"attribute_equals": {"cluster": 1280, "attribute": 1, "value": 21}},
+        {"has_attribute": {"cluster": 1280, "attribute": 2}}
+      ]}
+    },
+    {"domain": "tamper", "when": {"has_attribute": {"cluster": 1280, "attribute": 2}}}
+  ],
+  "dev_type_requirements": [
+    {"dev_type": "light", "any_domains": ["onoff"]},
+    {"dev_type": "plug", "any_domains": ["onoff"]},
+    {"dev_type": "window_covering", "any_domains": ["cover"]},
+    {"dev_type": "door_lock", "any_domains": ["lock"]},
+    {"dev_type": "thermostat", "any_domains": ["climate"]},
+    {"dev_type": "switch", "any_domains": ["onoff", "button_event"]},
+    {"dev_type": "scene_panel", "any_domains": ["button_event"]},
+    {"dev_type": "contact_sensor", "any_domains": ["contact"]},
+    {"dev_type": "motion_sensor", "any_domains": ["motion"]},
+    {"dev_type": "light_sensor", "any_domains": ["illuminance"]},
+    {"dev_type": "environment_sensor", "any_domains": ["temperature", "humidity"]}
+  ],
+  "property_mappings": [
+    {"domain": "onoff", "property": "on", "cluster": 6, "attribute": 0, "decode": {"op": "bool_nonzero"}},
+    {"domain": "battery", "property": "battery_level", "cluster": 1, "attribute": 33, "decode": {"op": "scale_unsigned", "multiplier": 1, "divisor": 2, "round": "nearest"}},
+    {"domain": "motion", "property": "motion_detected", "cluster": 1030, "attribute": 0, "decode": {"op": "bool_nonzero"}},
+    {"domain": "brightness", "property": "brightness", "cluster": 8, "attribute": 0, "decode": {"op": "scale_unsigned", "multiplier": 100, "divisor": 254, "round": "floor"}},
+    {"domain": "color_temp", "property": "color_temperature", "cluster": 768, "attribute": 7, "decode": {"op": "reciprocal", "numerator": 1000000, "round": "nearest"}},
+    {"domain": "color_hs", "property": "hue", "cluster": 768, "attribute": 0, "decode": {"op": "raw_unsigned"}},
+    {"domain": "color_hs", "property": "saturation", "cluster": 768, "attribute": 1, "decode": {"op": "scale_unsigned", "multiplier": 100, "divisor": 254, "round": "floor"}},
+    {"domain": "position", "property": "position", "cluster": 258, "attribute": 8, "decode": {"op": "invert_percent", "base": 100, "clamp_max": 100}},
+    {"domain": "lock", "property": "lock_state", "cluster": 257, "attribute": 0, "decode": {"op": "enum_unsigned", "map": {"1": "locked", "2": "unlocked"}, "default": "unknown"}},
+    {"domain": "climate", "property": "climate_target_temperature", "cluster": 513, "attribute": 18, "decode": {"op": "signed_scale", "divisor": 100}},
+    {"domain": "climate", "property": "climate_mode", "cluster": 513, "attribute": 28, "decode": {"op": "enum_unsigned", "map": {"0": "off", "1": "auto", "3": "cool", "4": "heat"}}},
+    {"domain": "temperature", "property": "temperature", "cluster": 1026, "attribute": 0, "decode": {"op": "signed_scale", "divisor": 100}},
+    {"domain": "temperature", "property": "temperature", "cluster": 513, "attribute": 0, "decode": {"op": "signed_scale", "divisor": 100}},
+    {"domain": "humidity", "property": "humidity", "cluster": 1029, "attribute": 0, "decode": {"op": "unsigned_scale", "divisor": 100}},
+    {
+      "domain": "contact",
+      "property": "contact_open",
+      "cluster": 1280,
+      "attribute": 2,
+      "when": {"attribute_equals": {"cluster": 1280, "attribute": 1, "value": 21}},
+      "decode": {"op": "bit_bool", "bit": 0}
+    },
+    {"domain": "tamper", "property": "tamper", "cluster": 1280, "attribute": 2, "decode": {"op": "bit_bool", "bit": 2}}
+  ],
+  "event_mappings": [
+    {
+      "domain": "gqb",
+      "event": "gqb_tunneled_response",
+      "match": {"cluster": 2730, "command_in": [1], "cluster_specific": true, "direction": 1, "min_payload": 1},
+      "args": [
+        {"name": "opcode", "source": {"op": "payload_unsigned", "offset": 0, "width": 1}},
+        {"name": "data", "source": {"op": "payload_bytes", "offset": 1}}
+      ]
+    },
+    {
+      "domain": "gqb",
+      "event": "gqb_tunneled_report",
+      "match": {"cluster": 2730, "command_in": [2], "cluster_specific": true, "direction": 1, "min_payload": 1},
+      "args": [
+        {"name": "opcode", "source": {"op": "payload_unsigned", "offset": 0, "width": 1}},
+        {"name": "data", "source": {"op": "payload_bytes", "offset": 1}}
+      ]
+    },
+    {
+      "domain": "kr_ext32_zone_status",
+      "event": "kr_ext32_zone_status_notification",
+      "match": {"cluster": 1280, "command_in": [0], "cluster_specific": true, "direction": 1, "min_payload": 10},
+      "args": [
+        {"name": "extended32_status", "source": {"op": "payload_unsigned", "offset": 6, "width": 4}}
+      ]
+    },
+    {
+      "domain": "contact",
+      "event": "contact_changed",
+      "match": {"cluster": 1280, "command_in": [0], "cluster_specific": true, "direction": 1, "min_payload": 2},
+      "args": [
+        {"name": "contact_open", "source": {"op": "payload_bit_bool", "offset": 0, "width": 2, "bit": 0}}
+      ]
+    },
+    {
+      "domain": "button_event",
+      "event": "button_event",
+      "match": {"cluster": 6, "command_in": [0, 1, 2], "cluster_specific": true, "direction": 1, "min_payload": 0},
+      "args": [
+        {"name": "button", "source": {"op": "const_number", "value": 1}},
+        {"name": "gesture", "source": {"op": "command_enum", "map": {"0": "single", "1": "single", "2": "double"}}}
+      ]
+    },
+    {
+      "domain": "button_event",
+      "event": "button_event",
+      "match": {"cluster": 258, "command_in": [0, 1, 2], "cluster_specific": true, "direction": 1, "min_payload": 0},
+      "args": [
+        {"name": "button", "source": {"op": "const_number", "value": 1}},
+        {"name": "gesture", "source": {"op": "const_string", "value": "single"}}
+      ]
+    }
+  ],
+  "set_state_mappings": [
+    {"domain": "onoff", "property": "on", "encoder": {"op": "command_bool", "cluster": 6, "true_command": 1, "false_command": 0}},
+    {"domain": "brightness", "property": "brightness", "encoder": {"op": "u8_scale", "cluster": 8, "command": 4, "multiplier": 254, "divisor": 100, "round": "nearest", "tail": [0, 0, 0]}},
+    {"domain": "color_temp", "property": "color_temperature", "encoder": {"op": "u16_reciprocal", "cluster": 768, "command": 10, "numerator": 1000000, "round": "nearest", "tail": [0, 0]}},
+    {"domain": "color_hs", "property": "hue", "encoder": {"op": "u8_scale", "cluster": 768, "command": 0, "multiplier": 1, "divisor": 1, "round": "nearest", "tail": [0, 0, 0]}},
+    {"domain": "color_hs", "property": "saturation", "encoder": {"op": "u8_scale", "cluster": 768, "command": 3, "multiplier": 254, "divisor": 100, "round": "nearest", "tail": [0, 0]}},
+    {"domain": "position", "property": "position", "encoder": {"op": "u8_invert", "cluster": 258, "command": 5, "base": 100}},
+    {"domain": "lock", "property": "lock_state", "encoder": {"op": "command_enum", "cluster": 257, "map": {"locked": 0, "unlocked": 1}}},
+    {"domain": "climate", "property": "climate_mode", "encoder": {"op": "write_attribute_enum", "cluster": 513, "global": true, "command": 2, "attribute": 28, "type": 48, "map": {"off": 0, "auto": 1, "cool": 3, "heat": 4}}},
+    {"domain": "climate", "property": "climate_target_temperature", "encoder": {"op": "write_attribute_i16_scale", "cluster": 513, "global": true, "command": 2, "attribute": 18, "type": 41, "multiplier": 100}}
+  ],
+  "invoke_mappings": [
+    {"domain": "gqb", "action": "gqb_tunneled_request", "encoder": {"op": "command_tunnel", "cluster": 2730, "command": 0}},
+    {"domain": "gqb", "action": "gqb_tunneled_report_response", "encoder": {"op": "command_tunnel", "cluster": 2730, "command": 3}},
+    {"domain": "identify", "action": "identify", "encoder": {"op": "command_u16", "cluster": 3, "command": 0, "arg": "identify_time"}},
+    {"domain": "onoff", "action": "turn_on", "encoder": {"op": "command", "cluster": 6, "command": 1}},
+    {"domain": "onoff", "action": "turn_off", "encoder": {"op": "command", "cluster": 6, "command": 0}},
+    {"domain": "onoff", "action": "toggle", "encoder": {"op": "command", "cluster": 6, "command": 2}},
+    {"domain": "cover", "action": "open", "encoder": {"op": "command", "cluster": 258, "command": 0}},
+    {"domain": "cover", "action": "close", "encoder": {"op": "command", "cluster": 258, "command": 1}},
+    {"domain": "cover", "action": "stop", "encoder": {"op": "command", "cluster": 258, "command": 2}}
+  ]
+}

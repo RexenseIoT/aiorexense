@@ -1,5 +1,5 @@
-
 import aiorexense.const as const
+
 
 def test_constants():
     assert const.DEFAULT_PORT == 80
