@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1
+
+- Publish release-tag builds through PyPI Trusted Publishing using GitHub Actions
+  OIDC, with signed attestations for the wheel and source distribution.
+- Restrict publishing to the `pypi` environment and validate the release tag
+  against the tested wheel before uploading. The workflow no longer needs a
+  long-lived PyPI token or permission to write repository contents.
+- No changes to the gateway API or device behavior.
+
 ## 0.2.0
 
 - Add the independent taxonomy v3 gateway transport, endpoint models and packaged

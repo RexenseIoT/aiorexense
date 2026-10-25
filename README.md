@@ -133,11 +133,20 @@ python -m twine check dist/*
 Public [GitHub Actions](https://github.com/RexenseIoT/aiorexense/actions) runs tests
 on Python 3.11–3.14, checks types and formatting, and builds the source archive
 and wheel. Releases publish those CI-built artifacts to PyPI after all checks
-pass. Configure the repository's `PYPI_API_TOKEN` Actions secret, update
-`src/__init__.py` and `CHANGELOG.md`, then push a main-branch commit containing a
-`Release: X.Y.Z` trailer, or run the workflow on `main` with that release version.
-The workflow verifies the package version and creates the matching immutable
-`vX.Y.Z` tag. It rejects tags pointing at a different commit and does not overwrite
-PyPI releases. Never put a publishing token in the source tree or a workflow file.
+pass, using [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) and
+signed publish attestations. No long-lived PyPI token is required.
+
+Configure the existing PyPI project's GitHub Trusted Publisher with owner
+`RexenseIoT`, repository `aiorexense`, workflow filename `ci.yml`, and environment
+`pypi`. In GitHub, restrict the `pypi` environment's deployment rules to tags
+matching `v*`. Only the publishing job receives the `id-token: write` permission.
+
+To release, update `src/__init__.py` and `CHANGELOG.md`, merge the tested change
+to `main`, and push a matching `vX.Y.Z` tag. The tag-triggered workflow builds and
+tests the release, checks that the tag matches the wheel's package name and
+version, then publishes the wheel and source archive with their attestations.
+Branch and pull-request builds do not publish. A manual workflow run publishes
+only when the selected ref is a valid release tag. Never move an existing
+release tag or attempt to overwrite an existing PyPI release.
 
 Maintainer: [@GorgeOu](https://github.com/GorgeOu). Licensed under [MIT](LICENSE).
